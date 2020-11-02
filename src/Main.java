@@ -9,7 +9,8 @@ public class Main {
     static void quickestDescentMethod(){
         //Нужно найти s: посмотреть в методе золотого сечения замечание
         //|x2|, |x1| не стоит брать более 3 (экспонента будет возводиться в сумму их квадратов и выйдет за границы типа)
-        Function func = new Function(5,1,-3,10e-6);
+        //Деления на ноль нет
+        Function func = new Function(1,3,10,10e-6);
         double sk;
         System.out.println("\t\t\t\t\t\tМЕТОД СКОРЕЙШЕГО СПУСКА\nДанные по каждой итерации:");
         System.out.println("#####   x                                     f(x)        |f'(x)|");
@@ -63,7 +64,7 @@ class Function{
         return f(x[0], x[1], x[2]);
     }
 
-    //Первые производные: (+методы перегружены)
+    //Первые производные: (+перегружены)
     public double dx1(double x1, double x2) {
         return (2 * x1 * Math.exp(x1 * x1 + x2 * x2));
     }
@@ -83,21 +84,26 @@ class Function{
         return dx3(x[1],x[2]);
     }
 
-    //Вторые производные: (решил на листке, есть в телефоне фото) без перегрузки
+    //Вторые производные:
+    //x[0] = x1; x[1] = x2; x[2] = x3
     public double dx1dx1(double[] x){
-        return 0;
+        return (2 * Math.exp(x[0] * x[0] + x[1] * x[1]) + 4 * x[0] * x[0] * Math.exp(x[0] * x[0] + x[1] * x[1]));
     }
     public double dx2dx2(double[] x){
-        return 0;
+        double e = Math.exp(x[0] * x[0] + x[1] * x[1]);
+        double del = (4 + x[1] * x[1] + 2 * x[2] * x[2]);
+        return (2 * e + 4 * x[1] * x[1] * e + (8 - 2 * x[1] * x[1] + 4 * x[2] * x[2])/(del * del));
     }
     public double dx3dx3(double[] x){
-        return 0;
+        double del = (4 + x[1] * x[1] + 2 * x[2] * x[2]);
+        return ((16 + 4 * x[1] * x[1] - 8 * x[2] * x[2])/(del * del));
     }
     public double dx1dx2(double[] x){
-        return 0;
+        return (4 * x[0] * x[1] + Math.exp(x[0] * x[0] + x[1] * x[1]));
     }//=dx2dx1
     public double dx2dx3(double[] x){
-        return 0;
+        double del = (4 + x[1] * x[1] + 2 * x[2] * x[2]);
+        return (-8 * x[1] * x[2] / (del * del));
     }//=dx3dx2
     public double dx3dx1(double[] x){
         return 0;
@@ -116,7 +122,6 @@ class Function{
         x[1] = x[1] - s * g[1];
         x[2] = x[2] - s * g[2];
     }
-
     public double phi(double s){
         double x1 = x[0] - s * g[0];
         double x2 = x[1] - s * g[1];
@@ -158,6 +163,7 @@ class Function{
         }
         return h;
     }
+
 
 
 }
