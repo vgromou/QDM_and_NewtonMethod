@@ -4,7 +4,9 @@ public class Main {
 
     public static void main(String[] args) {
         quickestDescentMethod();
-        System.out.println("\n\n\n");
+        System.out.println("\n+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=" +
+                           "\n=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+" +
+                           "\n+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=\n");
         newtonMethod();
     }
 
@@ -13,7 +15,7 @@ public class Main {
         //Нужно найти s: посмотреть в методе золотого сечения замечание
         //|x2|, |x1| не стоит брать более 3 (экспонента будет возводиться в сумму их квадратов и выйдет за границы типа)
         //Деления на ноль нет
-        Function func = new Function(1,2,1,10e-6);
+        Function func = new Function(1,1,1,10e-6);
         double sk;
         System.out.println("\t\t\t\t\t\tМЕТОД СКОРЕЙШЕГО СПУСКА\nДанные по каждой итерации:");
         System.out.println("#####   x                                     f(x)        |f'(x)|");
@@ -32,9 +34,9 @@ public class Main {
         }
         System.out.println("______________________________________________________________________________");
         System.out.println("Результат:");
-        System.out.println("   xMin: [" + func.x[0] + ", " + func.x[1] + ", " + func.x[2] + "]");
-        System.out.println("f(xMin): " + func.f(func.x));
-
+        System.out.println("    xMin: [" + func.x[0] + ", " + func.x[1] + ", " + func.x[2] + "]");
+        System.out.println(" f(xMin): " + func.f(func.x));
+        System.out.println("f(0,0,0): " + func.f(new double[]{0, 0, 0}));
     }
 
     //Метод Ньютона
@@ -59,8 +61,9 @@ public class Main {
         }
         System.out.println("______________________________________________________________________________");
         System.out.println("Результат:");
-        System.out.println("   xMin: [" + func.x[0] + ", " + func.x[1] + ", " + func.x[2] + "]");
-        System.out.println("f(xMin): " + func.f(func.x));
+        System.out.println("    xMin: [" + func.x[0] + ", " + func.x[1] + ", " + func.x[2] + "]");
+        System.out.println(" f(xMin): " + func.f(func.x));
+        System.out.println("f(0,0,0): " + func.f(new double[]{0, 0, 0}));
     }
 }
 
@@ -218,7 +221,7 @@ abstract class Matrix{
         double determinant = findDeterminant(matrix);
         double[][] complement = getComplementMatrix(matrix);
         double[][] transposed = transpose(complement);
-        if(Math.abs(determinant) < 10e-10) throw new ArithmeticException();
+        //if(Math.abs(determinant) < 10e-10) throw new ArithmeticException();
         return multiplyByNumber(transposed,1/determinant);
     }
 
