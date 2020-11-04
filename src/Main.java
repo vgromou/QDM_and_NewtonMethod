@@ -13,10 +13,12 @@ public class Main {
         //Нужно найти s: посмотреть в методе золотого сечения замечание
         //|x2|, |x1| не стоит брать более 3 (экспонента будет возводиться в сумму их квадратов и выйдет за границы типа)
         //Деления на ноль нет
-        Function func = new Function(1,3,10,10e-6);
+        Function func = new Function(1,2,1,10e-6);
         double sk;
         System.out.println("\t\t\t\t\t\tМЕТОД СКОРЕЙШЕГО СПУСКА\nДанные по каждой итерации:");
         System.out.println("#####   x                                     f(x)        |f'(x)|");
+        System.out.printf("%5d   [% 3.6f, % 3.6f, % 3.6f]    % 3.6f    %3.6f\n", 0, func.x[0], func.x[1], func.x[2],
+                func.f(func.x[0],func.x[1],func.x[2]), func.dxNorm());
         for(int i = 1; func.gLength > func.eps; i++){
             sk = func.findArgMin(0.1); //h = шаг
             func.setX(sk);
@@ -37,22 +39,23 @@ public class Main {
 
     //Метод Ньютона
     static void newtonMethod(){
-        //Нужны какие-то определенные значения x, иначе та же проблема, что в методе скорейшего спуска
-        //но уже в середине
-        Function func = new Function(0,0.1,2,10e-10);
-        double[] funcDx = func.g; //f'(x)
-        Matrix matrix = new Matrix();
-        matrix.calcMatrix(func, func.x); //f''(x) (считает значение второй производной в точке x)
-        System.out.println("\t\t\t\t\t\t\tМЕТОД НЬЮТОНА\nДанные по каждой итерации:");
+        //Не любой вектор пройдет. Иногда, при поиске обратной матрицы, определитель будет равен нулю
+        //т.е. произойдет деление на ноль и получится бесконечность. На такой случай введена проверка равенства
+        //определителя нулю (с точностью заданной эпсилон), и если он нулю равен, вылетит арифметическая ошибка
+        Function func = new Function(1,2,1,10e-10);
+        System.out.println("\t\t\t\t\t\t\t\tМЕТОД НЬЮТОНА\nДанные по каждой итерации:");
         System.out.println("#####   x                                     f(x)        |f'(x)|");
-        for(int i = 1; func.norm() > func.eps; i++){
-            double[][] inverseMatrix = matrix.inverseMatrix();
-            double[] v = Matrix.multiplyByVector(inverseMatrix, funcDx);
-            func.setX(v);
-            funcDx = new double[]{func.dx1(func.x), func.dx2(func.x), func.dx3(func.x)};
-            matrix.calcMatrix(func, func.x);
+        System.out.printf("%5d   [% 3.6f, % 3.6f, % 3.6f]    % 3.6f    %3.6f\n", 0, func.x[0], func.x[1], func.x[2],
+                func.f(func.x[0],func.x[1],func.x[2]), func.dxNorm());
+        double[] dx = func.getFdx();
+        double[][] dxdx = Matrix.getMatrix(func, func.x);
+        for(int i = 1; func.dxNorm() > func.eps; i++){
+            double[][] inversed = Matrix.inverse(dxdx);
+            func.setX(Matrix.multiplyByVector(inversed, dx));
+            dx = func.getFdx();
+            dxdx = Matrix.getMatrix(func, func.x);
             System.out.printf("%5d   [% 3.6f, % 3.6f, % 3.6f]    % 3.6f    %3.6f\n", i, func.x[0], func.x[1], func.x[2],
-                    func.f(func.x[0],func.x[1],func.x[2]), func.norm());
+                    func.f(func.x[0],func.x[1],func.x[2]), func.dxNorm());
         }
         System.out.println("______________________________________________________________________________");
         System.out.println("Результат:");
@@ -131,6 +134,9 @@ class Function{
     public double dx3dx1(double[] x){
         return 0;
     }//=dx1dx3
+    public double dx2dx1(double[] x){ return dx1dx2(x);}
+    public double dx3dx2(double[] x){ return dx2dx3(x);}
+    public double dx1dx3(double[] x){ return dx3dx1(x);}
 
     //Норма g: (+перегружен)
     public double nG(double gk1, double gk2, double gk3) {
@@ -144,12 +150,12 @@ class Function{
         x[0] = x[0] - s * g[0];
         x[1] = x[1] - s * g[1];
         x[2] = x[2] - s * g[2];
-    }
+    }//Для Метода Скорейшего Спуска
     public void setX(double[] v){
         x[0] = x[0] - v[0];
         x[1] = x[1] - v[1];
         x[2] = x[2] - v[2];
-    }
+    }//Для Метода Ньютона
     public double phi(double s){
         double x1 = x[0] - s * g[0];
         double x2 = x[1] - s * g[1];
@@ -192,75 +198,103 @@ class Function{
         return h;
     }
 
+    // |f(x)|
+    public double norm(){return Math.sqrt(x[0] * x[0] + x[1] * x[1] + x[2] * x[2]);}
     // |f'(x)|
-    public double norm(){return nG(x[0],x[1],x[2]);}
+    public double dxNorm(){
+        double d1 = this.dx1(x);
+        double d2 = this.dx2(x);
+        double d3 = this.dx3(x);
+        return Math.sqrt(d1 * d1 + d2 * d2 + d3 * d3);
+    }
+    public double[] getFdx(){
+        return new double[]{this.dx1(x), this.dx2(x), this.dx3(x)};
+    }
 }
 
-class Matrix{
-    //Класс подходит только для этого задания (3*3, вторые частные производные Function)
-    double[][] matrix;
-    double detMatrix;
-    double[][] inverse;
-    double[][] trans;
+abstract class Matrix{
 
-    public Matrix(){
-        matrix = new double[3][3];
-        inverse = new double[3][3];
+    public static double[][] inverse(double[][] matrix){
+        double determinant = findDeterminant(matrix);
+        double[][] complement = getComplementMatrix(matrix);
+        double[][] transposed = transpose(complement);
+        if(Math.abs(determinant) < 10e-10) throw new ArithmeticException();
+        return multiplyByNumber(transposed,1/determinant);
     }
 
-    public void calcMatrix(Function f, double[] x){
-        this.matrix = new double[][] {{f.dx1dx1(x), f.dx1dx2(x), f.dx3dx1(x)},
-                                      {f.dx1dx2(x), f.dx2dx2(x), f.dx2dx3(x)},
-                                      {f.dx3dx1(x), f.dx2dx3(x), f.dx3dx3(x)}};
-    }
-
-    void calcDeterminant(){
-        double[][] m = this.matrix;
-        this.detMatrix = m[0][0]*(m[1][1]*m[2][2]-m[1][2]*m[2][1])-
-                m[0][1]*(m[1][0]*m[2][2]-m[1][2]*m[2][0]) + m[0][2]*(m[1][0]*m[2][1]-m[1][1]*m[2][0]);
-    }
-
-    public double[][] inverseMatrix(){
-        this.transpose();
-        this.calcDeterminant();
-        this.inverse = multiplyByNumber(this.trans, 1/this.detMatrix);
-        return this.inverse;
-    }
-
-    public static double[][] multiplyByNumber(double[][] m, double k){
-        m[0][0] = m[0][0] * k;
-        m[0][1] = m[0][1] * k;
-        m[0][2] = m[0][2] * k;
-        m[1][0] = m[1][0] * k;
-        m[1][1] = m[1][1] * k;
-        m[1][2] = m[1][2] * k;
-        m[2][0] = m[2][0] * k;
-        m[2][1] = m[2][1] * k;
-        m[2][2] = m[2][2] * k;
-        return m;
-    }
-
-    void transpose(){
-        double[][] m = this.matrix;
-        this.trans = new double[3][3];
-        for (int i = 0; i < 3; i++) {
-            for (int j = 0; j < 3; j++) {
-                this.trans[i][j] = m[j][i];
+    public static double[][] transpose(double[][] matrix){
+        double[][] res = new double[matrix.length][matrix[0].length];
+        for (int i = 0; i < matrix.length; i++) {
+            for (int j = 0; j < matrix[0].length; j++) {
+                res[i][j] = matrix[j][i];
             }
         }
+        return res;
     }
 
-    public static double[] multiplyByVector(double[][] m, double[] v){
-        double row1 = m[0][0] * v[0] + m[0][1] * v[1] + m[0][2] * v[2];
-        double row2 = m[1][0] * v[0] + m[1][1] * v[1] + m[1][2] * v[2];
-        double row3 = m[2][0] * v[0] + m[2][1] * v[1] + m[2][2] * v[2];
-        return new double[]{row1, row2, row3};
+    public static double[][] multiplyByNumber(double[][] matrix, double n){
+        double[][] res = new double[matrix.length][matrix[0].length];
+        for (int i = 0; i < matrix.length; i++) {
+            for (int j = 0; j < matrix[0].length; j++) {
+                res[i][j] = matrix[i][j] * n;
+            }
+        }
+        return res;
     }
 
-    @Override
-    public String toString() {
-        return "Matrix{" +
-                "matrix=" + Arrays.deepToString(matrix) +
-                '}';
+    public static double[] multiplyByVector(double[][] matrix, double[] vector){
+        double[] res = new double[vector.length];
+        for (int i = 0; i < matrix.length; i++) {
+            res[i] = matrix[i][0] * vector[0];
+            for (int j = 1; j < matrix[0].length; j++) {
+                res[i] += matrix[i][j] * vector[j];
+            }
+        }
+        return res;
+    }
+
+    public static double[][] getMatrix(Function f, double[] x){
+        return new double[][] {{f.dx1dx1(x), f.dx1dx2(x), f.dx1dx3(x)},
+                               {f.dx2dx1(x), f.dx2dx2(x), f.dx2dx3(x)},
+                               {f.dx3dx1(x), f.dx3dx2(x), f.dx3dx3(x)}};
+    }
+
+    public static double[][] getComplementMatrix(double[][] matrix){
+        double[][] res = new double[matrix.length][matrix[0].length];
+        for (int i = 0; i < matrix.length; i++) {
+            for (int j = 0; j < matrix[0].length; j++) {
+                int sign;
+                if((i + j) %2 == 0) sign = 1;
+                else sign = -1;
+                res[i][j] = sign * findDeterminant(getMinor(matrix,i,j));
+            }
+        }
+        return res;
+    }
+
+    public static double[][] getMinor(double[][] matrix, int row, int column){
+        double[][] res = new double[matrix.length - 1][matrix[0].length - 1];
+        for (int i = 0, k = 0; i < matrix.length; i++) {
+            if(i == row) continue;
+            for (int j = 0, m = 0; j < matrix[0].length; j++) {
+                if(j == column) continue;
+                res[k][m] = matrix[i][j];
+                m++;
+            }
+            k++;
+        }
+        return res;
+    }
+
+    public static double findDeterminant(double[][] matrix){
+        double res = 0;
+        if(matrix.length < 3) return matrix[0][0] * matrix[1][1] - matrix[0][1] * matrix[1][0];
+        for (int i = 0; i < matrix.length; i++) {
+            double[][] temp = getMinor(matrix, 0, i);
+            double detMinor = findDeterminant(temp);
+            if (i % 2 == 0) res += matrix[0][i] * detMinor;
+            else res -= matrix[0][i] * detMinor;
+        }
+        return res;
     }
 }
