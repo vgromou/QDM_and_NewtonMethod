@@ -12,22 +12,19 @@ public class Main {
 
     //Метод Скорейшего Спуска
     static void quickestDescentMethod(){
-        //Нужно найти s: посмотреть в методе золотого сечения замечание
-        //|x2|, |x1| не стоит брать более 3 (экспонента будет возводиться в сумму их квадратов и выйдет за границы типа)
-        //Деления на ноль нет
-        Function func = new Function(1,1,1,10e-6);
+        //x нужно правильно подобрать (|x1|, |x2| ~< 3)
+        Function func = new Function(1,2,1,10e-6);
         double sk;
         System.out.println("\t\t\t\t\t\tМЕТОД СКОРЕЙШЕГО СПУСКА\nДанные по каждой итерации:");
         System.out.println("#####   x                                     f(x)        |f'(x)|");
         System.out.printf("%5d   [% 3.6f, % 3.6f, % 3.6f]    % 3.6f    %3.6f\n", 0, func.x[0], func.x[1], func.x[2],
                 func.f(func.x[0],func.x[1],func.x[2]), func.dxNorm());
-        for(int i = 1; func.gLength > func.eps; i++){
+        for(int i = 1; func.gLength >= func.eps; i++){
             sk = func.findArgMin(0.1); //h = шаг
             func.setX(sk);
             func.g[0] = func.dx1(func.x);
             func.g[1] = func.dx2(func.x);
             func.g[2] = func.dx3(func.x);
-
             func.gLength = func.nG();
             System.out.printf("%5d   [% 3.6f, % 3.6f, % 3.6f]    % 3.6f    %3.6f\n", i, func.x[0], func.x[1], func.x[2],
                     func.f(func.x[0],func.x[1],func.x[2]), func.gLength);
@@ -41,10 +38,8 @@ public class Main {
 
     //Метод Ньютона
     static void newtonMethod(){
-        //Не любой вектор пройдет. Иногда, при поиске обратной матрицы, определитель будет равен нулю
-        //т.е. произойдет деление на ноль и получится бесконечность. На такой случай введена проверка равенства
-        //определителя нулю (с точностью заданной эпсилон), и если он нулю равен, вылетит арифметическая ошибка
-        Function func = new Function(1,2,1,10e-10);
+        //x нужно правильно подобрать
+        Function func = new Function(1,2,0.1,10e-6);
         System.out.println("\t\t\t\t\t\t\t\tМЕТОД НЬЮТОНА\nДанные по каждой итерации:");
         System.out.println("#####   x                                     f(x)        |f'(x)|");
         System.out.printf("%5d   [% 3.6f, % 3.6f, % 3.6f]    % 3.6f    %3.6f\n", 0, func.x[0], func.x[1], func.x[2],
@@ -221,7 +216,7 @@ abstract class Matrix{
         double determinant = findDeterminant(matrix);
         double[][] complement = getComplementMatrix(matrix);
         double[][] transposed = transpose(complement);
-        //if(Math.abs(determinant) < 10e-10) throw new ArithmeticException();
+        if(Math.abs(determinant) < 10e-10) throw new ArithmeticException();
         return multiplyByNumber(transposed,1/determinant);
     }
 
