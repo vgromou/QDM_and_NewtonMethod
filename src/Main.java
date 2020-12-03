@@ -13,7 +13,7 @@ public class Main {
     //Метод Скорейшего Спуска
     static void quickestDescentMethod(){
         //x нужно правильно подобрать (|x1|, |x2| ~< 3)
-        Function func = new Function(1,2,1,10e-6);
+        Function func = new Function(1,2,1,1e-6);
         double sk;
         System.out.println("\t\t\t\t\t\tМЕТОД СКОРЕЙШЕГО СПУСКА\nДанные по каждой итерации:");
         System.out.println("#####   x                                     f(x)        |f'(x)|");
@@ -39,7 +39,7 @@ public class Main {
     //Метод Ньютона
     static void newtonMethod(){
         //x нужно правильно подобрать
-        Function func = new Function(1,2,0.1,10e-6);
+        Function func = new Function(1,2,0.1,1e-6);
         System.out.println("\t\t\t\t\t\t\t\tМЕТОД НЬЮТОНА\nДанные по каждой итерации:");
         System.out.println("#####   x                                     f(x)        |f'(x)|");
         System.out.printf("%5d   [% 3.6f, % 3.6f, % 3.6f]    % 3.6f    %3.6f\n", 0, func.x[0], func.x[1], func.x[2],
