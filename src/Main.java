@@ -174,7 +174,7 @@ class Function{
             if(phi(x) > phi(y)){
                 a = x;
                 x = y;
-                y = b + a - y;
+                y = b + a - x;
             }
             else{
                 b = y;
